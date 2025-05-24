@@ -40,7 +40,11 @@ func ShortenURL(c *fiber.Ctx) error{
 	defer r2.Close()
 	val, err := r2.Get(database.Ctx, c.IP()).Result()
 	if err == redis.Nil {
-		err = r2.Set(database.Ctx, c.IP(), os.Getenv("API_QOUTA"), 30*60*time.Second).Err()
+		if err := r2.Set(database.Ctx, c.IP(), os.Getenv("API_QOUTA"), 30*60*time.Second).Err(); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Internal Server Error",
+			})
+		}
 	} else {
 		valInt, _ := strconv.Atoi(val)
 		if valInt <= 0 {
